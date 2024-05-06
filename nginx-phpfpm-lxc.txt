@@ -1,0 +1,261 @@
+
+
+	- Тестовое задание выполнялось на Ubuntu Server 22.04.4.
+
+ •  •  • Добавим временный маршрут на хосте с KVM:
+ ip route add 10.243.60.0/24 via 192.168.122.211
+
+	- 192.168.1.142 - хост
+	- 192.168.122.211 - kvm виртуалки с LXC
+	- 10.243.60.168 - container-1 postgres 5433
+	- 10.243.60.114 - container-2 fpm 9000
+	- 10.243.60.95 - container-3 nginx 80
+	- ...
+
+
+
+ •  •  • Запуск контейнеров с nginx и php-fpn на базе OS Ubuntu:
+
+	- Запускаем контейнеры lxc для php-fpm (container-2) и nginx (container-3)
+lxc launch ubuntu-minimal:22.04 container-2
+lxc launch ubuntu-minimal:22.04 container-3
+
+ 	- установим и настроим php-fm и nginx:
+	- Установка PHP-FPM в container-2
+lxc exec container-2 -- apt update
+lxc exec container-2 -- apt install -y php-fpm php-pgsql
+
+	- Установка Nginx в container-3:
+lxc exec container-3 -- apt update
+lxc exec container-3 -- apt install -y nginx 
+
+
+
+
+ •  •  • Настройка PHP-FPM в container-2:
+	- провалимся в контейнер
+lxc exec container-2 bash
+
+	- в /etc/php/8.1/fpm/php.ini выставим значение cgi.fix_pathinfo=0 чтобы предотвратить возможные уязвимости:
+sed -i s/";cgi.fix_pathinfo=1"/"cgi.fix_pathinfo=0"/ /etc/php/8.1/fpm/php.ini 
+
+	- создадим каталог и поместим в него PHP скрипты:
+mkdir -m 755 -p /var/www/html
+echo "<?php include 'stocks.php';?>" > /var/www/html/index.php
+
+
+touch /var/www/html/stocks.php
+
+	- в stocks.php:
+<----->
+<?php
+echo '<h4>financial_exchange stocks </h4>';
+$host = '10.243.60.168';
+$port = '5433';
+$dbname = 'financial_exchange';
+$user = 'stocks_viewer';
+$password = 'password';
+
+$conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$password");
+  if (!$conn){
+  echo "connection error \n";
+}
+
+$result = pg_query($conn, "SELECT * FROM stocks");
+if (!$result) {
+  echo "An error occurred.\n";
+  exit;
+}
+
+while ($row = pg_fetch_row($result)) {
+  echo "stock_id: $row[0]  company_id: $row[1]  price: $row[2]  quantity: $row[3]  timestamp: $row[4]";
+  echo "<br />\n";
+}
+
+?>
+<----->
+
+chown -R www-data: /var/www/html
+
+	- Отредактируем конфигурационный файл www.conf для прослушивания соединений по tcp socket:
+	в /etc/php/8.1/fpm/pool.d/www.conf, пропишем:
+	listen = 0.0.0.0:9000
+
+systemctl restart php8.1-fpm
+
+
+
+ •  •  • реплицируем контейнер2
+
+poweroff
+
+
+ - На хосте ubuntu server:
+lxc copy container-2 container-2fpm1 && lxc start container-2fpm1
+lxc copy container-2 container-2fpm2 && lxc start container-2fpm2
+lxc copy container-2 container-2fpm3 && lxc start container-2fpm3
+
+
+
+ •  •  • Настройка Nginx в container-3:
+
+lxc exec container-3 bash
+	- в /etc/nginx/sites-available/default: укажем параметры для проксирования запросов в созданный пул PHP-FPM:
+
+<----->
+upstream phpfpm {
+	ip_hash;
+
+	server container-2:9000;
+	server container-2fpm1:9000;
+	server container-2fpm2:9000;
+	server container-2fpm3:9000;
+}
+
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	charset utf-8;
+	server_name _;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_pass phpfpm;
+		root /var/www/html;
+		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+		fastcgi_index index.php;
+		include fastcgi.conf;
+	}
+
+	# Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
+	# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+	location ~ /\. {
+		deny all;
+	}
+
+	# Directives to send expires headers and turn off 404 error logging.
+	location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+		expires 24h;
+		log_not_found off;
+	}
+	
+}
+<----->
+
+systemctl restart nginx
+
+ip -c a
+	>ip_адрес_контейнера
+
+
+ •  •  • Проверка работы балансировщика
+    - откроем в браузере http://10.243.60.46/index.php
+	- наблюдаем таблицу stocks, базы данных financial_exchange:
+
+	financial_exchange stocks
+stock_id: 1 company_id: 1 price: 50.25 quantity: 100 timestamp: 2023-11-30 13:49:40.814553+00
+stock_id: 2 company_id: 2 price: 75.50 quantity: 150 timestamp: 2023-11-30 13:49:40.814553+00
+stock_id: 3 company_id: 3 price: 30.75 quantity: 200 timestamp: 2023-11-30 13:49:40.814553+00
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

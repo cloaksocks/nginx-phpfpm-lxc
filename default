@@ -1,0 +1,42 @@
+upstream phpfpm {
+	ip_hash;
+
+	server container-2:9000;
+	server container-2fpm1:9000;
+	server container-2fpm2:9000;
+	server container-2fpm3:9000;
+}
+
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	charset utf-8;
+	server_name _;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_pass phpfpm;
+		root /var/www/html;
+		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+		fastcgi_index index.php;
+		include fastcgi.conf;
+	}
+
+	# Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
+	# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+	location ~ /\. {
+		deny all;
+	}
+
+	# Directives to send expires headers and turn off 404 error logging.
+	location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+		expires 24h;
+		log_not_found off;
+	}
+	
+}
