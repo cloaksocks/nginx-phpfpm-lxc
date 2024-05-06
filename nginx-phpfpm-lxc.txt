@@ -39,6 +39,9 @@ lxc exec container-2 bash
 	- в /etc/php/8.1/fpm/php.ini выставим значение cgi.fix_pathinfo=0 чтобы предотвратить возможные уязвимости:
 sed -i s/";cgi.fix_pathinfo=1"/"cgi.fix_pathinfo=0"/ /etc/php/8.1/fpm/php.ini 
 
+
+
+ •  •  • Cоздание PHP скрипта для отображения данных из таблицы в Postgres
 	- создадим каталог и поместим в него PHP скрипты:
 mkdir -m 755 -p /var/www/html
 echo "<?php include 'stocks.php';?>" > /var/www/html/index.php
