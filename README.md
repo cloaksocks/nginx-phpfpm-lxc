@@ -8,15 +8,17 @@ Loadbalancing with Nginx + php-fpm in lxc containers.
 
 ## Задание:
 
-Есть готовый кластер с PostgreSQL, которвй рвботает в LXC контейнере container-1, в postgres находится БД financial_exchange, c таблицеq stocks, к которой есть доступ с любого ip адреса для пользователя stocks_viewer, c паролем password. Ваша задача включает в себя следующее:
+Есть готовый кластер с PostgreSQL, который работает в LXC контейнере container-1, в postgres находится БД financial_exchange, c таблицей stocks, к которой есть доступ с любого ip адреса для пользователя stocks_viewer, c паролем password. Ваша задача включает в себя следующее:
 
 1. Установка и настройка php-fpm, в отдельном контейнере, для доступа к таблице stocks в бд financial_exchange.
 
-2. Репликация этого контейнера php-fpm, для создания пула из 4 контейнеров, для балансировки нагрузки.
+2. Cоздание PHP скрипта для отображения данных из таблицы в Postgres
+
+3. Репликация этого контейнера php-fpm, для создания пула из 4 контейнеров, для балансировки нагрузки.
     
-3. Установка и настройка Nginx в отдельном контейнере, для проксирования запросов в созданный пул инстансов PHP-FPM.
+4. Установка и настройка Nginx в отдельном контейнере, для проксирования запросов в созданный пул инстансов PHP-FPM.
     
-4. Проверка работы сборки.
+5. Проверка работы сборки.
 
 ## Шаги:
 
@@ -50,6 +52,8 @@ lxc exec container-2 bash
 sed -i s/";cgi.fix_pathinfo=1"/"cgi.fix_pathinfo=0"/ /etc/php/8.1/fpm/php.ini 
 ```
 
+
+### 3. Cоздание PHP скрипта для отображения данных из таблицы в Postgres
   - создадим каталог и поместим в него PHP скрипты:
 ```
 mkdir -m 755 -p /var/www/html
@@ -97,7 +101,7 @@ systemctl restart php8.1-fpm
 ```
 
 
-### 3. Реплицикация container-2
+### 4. Реплицикация container-2
 ```
 poweroff
 ```
@@ -109,7 +113,7 @@ lxc copy container-2 container-2fpm3 && lxc start container-2fpm3
 ```
 
 
-### 4. Настройка Nginx в container-3
+### 5. Настройка Nginx в container-3
 ```
 lxc exec container-3 bash
 ```
@@ -167,7 +171,7 @@ ip -c a
 	>ip_адрес_контейнера
 ```
  
-### 5. Проверка работы балансировщика
+### 6. Проверка работы балансировщика
   - откроем в браузере http://ip_адрес_контейнера/index.php, где видим таблицу stocks, базы данных financial_exchange:
 
 ![изображение](https://github.com/cloaksocks/nginx-phpfpm-lxc/assets/157986562/306603e4-6e6e-4b1b-99ff-68eed7edac96)
