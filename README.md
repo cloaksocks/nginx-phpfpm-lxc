@@ -8,7 +8,7 @@ Loadbalancing with Nginx + php-fpm in lxc containers.
 
 ## Задание:
 
-Есть готовый кластер с PostgreSQL, который работает в LXC контейнере container-1, в postgres находится БД financial_exchange, c таблицей stocks, к которой есть доступ с любого ip адреса для пользователя stocks_viewer, c паролем password. Ваша задача включает в себя следующее:
+Есть готовый кластер с PostgreSQL, который работает в LXC контейнере container-1, в postgres находится БД financial_exchange, c таблицей stocks, к которой есть доступ с любого ip адреса для пользователя stocks_viewer, c паролем password (lxc postgres контейнер и мануал: [**github.com/cloaksocks/postgres-lxc**](https://github.com/cloaksocks/postgres-lxc) Ваша задача включает в себя следующее:
 
 1. Установка и настройка php-fpm, в отдельном контейнере, для доступа к таблице stocks в бд financial_exchange.
 
