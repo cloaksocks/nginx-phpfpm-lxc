@@ -136,16 +136,16 @@ server {
 	server_name _;
 
 	location / {
-		try_files $uri $uri/ /index.php?$args;
+		try_files $uri $uri/ =404;
 	}
 
 	location ~ \.php$ {
-		fastcgi_split_path_info ^(.+\.php)(/.+)$;
 		fastcgi_pass phpfpm;
 		proxy_next_upstream error;
 		root /var/www/html;
 		fastcgi_index index.php;
 		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
 		include fastcgi.conf;
 	}
 
