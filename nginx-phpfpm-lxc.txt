@@ -1,8 +1,8 @@
 
 
-	- Тестовое задание выполнялось на Ubuntu Server 22.04.4.
+	- Тестовое задание выполнялось на Ubuntu Server 22.04.4, работающем в гипервизоре KVM.
 
- •  •  • Добавим временный маршрут на хосте с KVM:
+ •  •  • Добавим временный маршрут на хосте с KVM, для дальнейшего отображения index.php в браузере хоста:
  ip route add 10.243.60.0/24 via 192.168.122.211
 
 	- 192.168.1.142 - хост
@@ -41,11 +41,10 @@ sed -i s/";cgi.fix_pathinfo=1"/"cgi.fix_pathinfo=0"/ /etc/php/8.1/fpm/php.ini
 
 
 
- •  •  • Cоздание PHP скрипта для отображения данных из таблицы в Postgres
+ •  •  • Cоздание PHP скрипта для отображения данных из таблицы в Postgres:
 	- создадим каталог и поместим в него PHP скрипты:
 mkdir -m 755 -p /var/www/html
 echo "<?php include 'stocks.php';?>" > /var/www/html/index.php
-
 
 touch /var/www/html/stocks.php
 
@@ -88,7 +87,7 @@ systemctl restart php8.1-fpm
 
 
 
- •  •  • реплицируем контейнер2
+ •  •  • реплицируем контейнер2:
 
 poweroff
 
@@ -147,109 +146,11 @@ ip -c a
 	>ip_адрес_контейнера
 
 
- •  •  • Проверка работы балансировщика
-    - откроем в браузере http://10.243.60.46/index.php
+ •  •  • Проверка работы балансировщика:
+    - откроем в браузере http://10.243.60.46/index.php:
 	- наблюдаем таблицу stocks, базы данных financial_exchange:
 
 	financial_exchange stocks
 stock_id: 1 company_id: 1 price: 50.25 quantity: 100 timestamp: 2023-11-30 13:49:40.814553+00
 stock_id: 2 company_id: 2 price: 75.50 quantity: 150 timestamp: 2023-11-30 13:49:40.814553+00
 stock_id: 3 company_id: 3 price: 30.75 quantity: 200 timestamp: 2023-11-30 13:49:40.814553+00
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
