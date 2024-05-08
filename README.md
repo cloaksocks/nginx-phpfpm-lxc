@@ -22,7 +22,7 @@ Loadbalancing with Nginx + php-fpm in lxc containers.
 
 ## Шаги:
 
-### 1. Запуск контейнеров с nginx и php-fpn на базе OS Ubuntu:
+### 1. Запуск контейнеров с nginx и php-fpm на базе OS Ubuntu:
   - Запускаем контейнеры lxc для php-fpm (container-2) и nginx (container-3)
 ```
 lxc launch ubuntu-minimal:22.04 container-2
